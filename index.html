@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controle de Validade</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tinta:#1B2A24; --papel:#F5F6F2; --branco:#FFFFFF;
+  --verde:#1E7A4C; --verde-escuro:#155C39;
+  --ambar:#F2B41B; --ambar-claro:#FBF1D3;
+  --linha:#D8DDD4; --cinza:#68716B; --verm:#B5432E; --verm-claro:#F7E4DF;
+  --laranja:#E0701A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Archivo',system-ui,sans-serif;background:var(--papel);color:var(--tinta);font-size:16px;line-height:1.45}
+header{background:var(--tinta);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:800;letter-spacing:-.02em}
+header .loc{background:var(--ambar);color:var(--tinta);font-size:13px;font-weight:800;padding:3px 10px;border-radius:99px}
+header .emp{color:#B8C4BC;font-size:13px;font-weight:500;flex:1}
+header button{background:none;color:var(--ambar);font-size:13px;font-weight:700;padding:4px 0}
+main{max-width:780px;margin:0 auto;padding:18px 14px 70px}
+h3{font-size:15px;font-weight:700;margin:24px 0 8px}
+button{font-family:inherit;font-size:15px;font-weight:600;border:none;border-radius:8px;cursor:pointer;padding:11px 16px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--verde);outline-offset:1px}
+.bt-verde{background:var(--verde);color:#fff}
+.bt-verde:active{background:var(--verde-escuro)}
+.bt-cinza{background:#ECECEA;color:var(--tinta)}
+.bt-mini{padding:7px 12px;font-size:13px;border-radius:6px}
+.bt-x{background:none;border:none;color:var(--cinza);font-size:18px;font-weight:700;padding:4px 8px;cursor:pointer}
+.bt-x:hover{color:var(--verm)}
+input[type=text],input[type=password],input[type=date],input[type=search],select{width:100%;font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--linha);border-radius:8px;background:var(--branco);color:var(--tinta)}
+label{display:block;font-size:13px;font-weight:600;color:var(--cinza);margin:12px 0 5px}
+.caixa{background:var(--branco);border:1px solid var(--linha);border-radius:10px;padding:16px}
+.msg{font-size:14px;color:var(--cinza);margin:8px 0}
+.erro{color:var(--verm);font-size:14px;margin:10px 0;min-height:1em}
+.centro{max-width:400px;margin:50px auto;padding:0 16px}
+.centro h2{font-size:22px;font-weight:800;margin-bottom:4px;letter-spacing:-.01em}
+.centro p{font-size:14px;color:var(--cinza);margin-bottom:14px}
+.centro .bt-verde{width:100%;margin-top:16px}
+.link{background:none;color:var(--verde);font-size:14px;font-weight:600;padding:12px 0 0;text-decoration:underline}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:var(--tinta);color:#fff;font-size:14px;font-weight:600;padding:10px 18px;border-radius:8px;opacity:0;transition:opacity .2s;z-index:9;max-width:92vw}
+.toast.on{opacity:1}
+.toast button{background:none;color:var(--ambar);padding:0 0 0 14px;font-size:14px;font-weight:800}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+details{margin-top:12px}
+summary{font-size:14px;font-weight:600;color:var(--verde);cursor:pointer}
+
+/* escolha de local */
+.locais{display:grid;gap:10px;margin-top:6px}
+.bt-local{display:flex;justify-content:space-between;align-items:center;background:var(--branco);border:1px solid var(--linha);color:var(--tinta);padding:18px;font-size:20px;font-weight:800;text-align:left;border-radius:10px}
+.bt-local small{font-size:13px;font-weight:500;color:var(--cinza)}
+
+/* abas */
+.abas{display:flex;gap:6px;margin-bottom:14px}
+.aba{background:none;color:var(--cinza);padding:8px 14px;font-size:14px;border-radius:99px}
+.aba.on{background:var(--tinta);color:#fff}
+
+/* faixas de prazo */
+.f-venc{--f:var(--tinta);--f-txt:#fff}
+.f-m1{--f:var(--verm);--f-txt:#fff}
+.f-m2{--f:var(--laranja);--f-txt:#2E1604}
+.f-m3{--f:var(--ambar);--f-txt:#3F2E03}
+.f-ok{--f:var(--verde);--f-txt:#fff}
+.faixas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.faixa{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:var(--branco);border:1px solid var(--linha);color:var(--tinta);padding:10px;border-radius:10px;text-align:left;min-height:84px}
+.faixa .sw{width:14px;height:14px;border-radius:4px;background:var(--f)}
+.faixa .n{font-size:24px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.faixa .r{font-size:12px;font-weight:600;color:var(--cinza);line-height:1.2}
+.faixa.on{background:var(--f);border-color:var(--f);color:var(--f-txt)}
+.faixa.on .r{color:var(--f-txt)}
+.faixa.on .sw{background:var(--f-txt)}
+.faixa.vazia .n{color:var(--linha)}
+.faixa.on.vazia .n{color:var(--f-txt)}
+@media (max-width:520px){.faixa{padding:8px 7px;min-height:78px}.faixa .n{font-size:20px}.faixa .r{font-size:11px}}
+
+/* entrada */
+.entrada{display:grid;grid-template-columns:1fr;gap:0 12px}
+@media (min-width:600px){.entrada{grid-template-columns:2fr 1fr 1fr}.entrada .cheio{grid-column:1 / -1}}
+.busca-prod{position:relative}
+.sugs{position:absolute;left:0;right:0;top:100%;background:var(--branco);border:1px solid var(--linha);border-radius:8px;margin-top:4px;z-index:5;max-height:300px;overflow:auto;box-shadow:0 6px 18px rgba(27,42,36,.12)}
+.sug{display:block;width:100%;background:none;text-align:left;padding:10px 12px;border-radius:0;border-top:1px solid var(--linha);font-size:14px;font-weight:600}
+.sug:first-child{border-top:none}
+.sug small{display:block;font-weight:500;color:var(--cinza);font-size:12px}
+.sug.ativo,.sug:hover{background:var(--papel)}
+.sug.novo{color:var(--verde)}
+.qtd-und{display:flex;align-items:center;gap:6px}
+.qtd-und span{font-size:13px;font-weight:700;color:var(--cinza);min-width:24px}
+.entrada-acao{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+
+/* lista */
+.filtro{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.filtro input{flex:1;min-width:160px}
+.filtro .limpar{background:none;color:var(--verde);font-size:13px;font-weight:700;padding:6px 4px}
+.lote{display:flex;align-items:stretch;gap:12px;padding:10px 0;border-top:1px solid var(--linha);cursor:pointer}
+.lote:first-child{border-top:none}
+.dias{flex:none;width:70px;min-height:58px;border-radius:8px;background:var(--f);color:var(--f-txt);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px 4px}
+.dias b{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dias span{font-size:11px;font-weight:700;margin-top:3px;line-height:1.1}
+.info{flex:1;min-width:0;align-self:center}
+.info .nome{font-weight:700;font-size:15px;line-height:1.25}
+.info .sub{font-size:13px;color:var(--cinza)}
+.info .obs{font-size:13px;color:var(--tinta);margin-top:2px}
+.lote .chev{align-self:center;color:var(--cinza);font-size:14px;padding:0 4px}
+.acoes-lote{display:flex;gap:8px;flex-wrap:wrap;padding:0 0 12px 82px}
+.acoes-lote .bt-desc{background:var(--verm-claro);color:var(--verm)}
+.acoes-lote .bt-del{background:none;color:var(--cinza);text-decoration:underline;font-weight:500}
+.edita{padding:0 0 14px 82px;display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.edita .cheio{grid-column:1 / -1}
+@media (max-width:520px){.acoes-lote,.edita{padding-left:0}}
+.pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.usado{background:#E2F0E8;color:var(--verde-escuro)}
+.pill.descartado{background:var(--verm-claro);color:var(--verm)}
+.item-linha{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--linha)}
+.item-linha:first-of-type{border-top:none}
+.item-linha .txt{flex:1;min-width:0}
+.item-linha .tit{font-weight:600;font-size:15px}
+.item-linha .sub{font-size:13px;color:var(--cinza)}
+.cat-tit{font-size:13px;font-weight:800;color:var(--cinza);margin:18px 0 2px}
+.cat-tit:first-child{margin-top:0}
+.mini-dot{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--f);margin-right:5px;vertical-align:0}
+.pill.lotes{background:var(--papel);color:var(--tinta);border:1px solid var(--linha)}
+.form-prod{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.form-prod .cheio{grid-column:1 / -1}
+.vazio{padding:22px 4px;text-align:center}
+.vazio b{display:block;font-size:16px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<header id="topo"><h1>Controle de Validade</h1><span class="emp" id="emp"></span></header>
+<main id="app"><p class="msg">Carregando…</p></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+var API = 'https://eklguenkzbzkhwdvuogx.supabase.co/functions/v1/validade/api';
+var app = document.getElementById('app');
+var EST = null;          // estado público (empresa, locais)
+var LOCAL = lerLS('val_local') || '';
+var PIN = LOCAL ? (lerLS('val_pin_' + LOCAL) || '') : '';
+var D = null;            // dados do local
+var VIEW = 'validades';
+var FILTRO = null;       // faixa selecionada
+var BUSCA = '';
+var BUSCA_P = '';
+var ABERTO = null;       // lote com ações abertas
+var EDIT = null;         // lote em edição
+var ENT = { produto: null, texto: '', validade: '', qtd: '', obs: '' };
+
+var FAIXAS = [
+  ['venc', 'Vencidos'],
+  ['m1', 'Até 1 mês'],
+  ['m2', '1 a 2 meses'],
+  ['m3', '2 a 3 meses'],
+  ['ok', '3 meses ou mais']
+];
+
+function lerLS(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function gravarLS(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch(e){} }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function norm(s){ return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase(); }
+function dBr(s){ if (!s) return ''; var p = String(s).slice(0,10).split('-'); return p[2] + '/' + p[1] + '/' + p[0].slice(2); }
+function isoBR(ts){ return new Date(Date.parse(ts) - 3 * 3600000).toISOString().slice(0, 10); }
+function fmtQtd(q, und){ if (q == null) return ''; return new Intl.NumberFormat('pt-BR', {maximumFractionDigits: 3}).format(q) + (und ? ' ' + und : ''); }
+function parseQtd(t){
+  t = String(t || '').trim();
+  if (!t) return null;
+  if (t.indexOf(',') >= 0) t = t.split('.').join('').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.split('.').join('');
+  var v = parseFloat(t);
+  return isNaN(v) || v < 0 ? NaN : v;
+}
+
+var toastTimer = null;
+function toast(t, acao, fn){
+  var el = document.getElementById('toast');
+  el.textContent = t;
+  if (acao) { var b = document.createElement('button'); b.textContent = acao; b.onclick = function(){ el.className = 'toast'; fn(); }; el.appendChild(b); }
+  el.className = 'toast on';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.className = 'toast'; }, acao ? 6000 : 2400);
+}
+
+function api(caminho, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({'Content-Type':'application/json', 'x-local': LOCAL, 'x-pin': PIN}, opts.headers || {});
+  return fetch(API + caminho, opts).then(function(r){
+    if (r.status === 401) { gravarLS('val_pin_' + LOCAL, null); PIN = ''; telaPin('PIN incorreto ou trocado. Digite de novo.'); throw new Error('401'); }
+    return r.json().then(function(j){ if (!r.ok) throw new Error(j.erro || 'Erro'); return j; });
+  });
+}
+
+// ---------------------------------------------------------------- faixas ---
+function diasAte(v){ return Math.round((Date.parse(v + 'T00:00:00Z') - Date.parse(D.hoje + 'T00:00:00Z')) / 86400000); }
+function faixa(n){ return n < 0 ? 'venc' : n <= 30 ? 'm1' : n <= 60 ? 'm2' : n < 90 ? 'm3' : 'ok'; }
+function tile(n){
+  if (n < 0) return '<b>' + (-n) + '</b><span>' + (n === -1 ? 'dia' : 'dias') + '<br>vencido</span>';
+  if (n === 0) return '<b>hoje</b><span>vence</span>';
+  return '<b>' + n + '</b><span>' + (n === 1 ? 'dia' : 'dias') + '</span>';
+}
+function textoDias(n){
+  if (n < -1) return 'venceu há ' + (-n) + ' dias';
+  if (n === -1) return 'venceu ontem';
+  if (n === 0) return 'vence hoje';
+  if (n === 1) return 'vence amanhã';
+  return 'faltam ' + n + ' dias';
+}
+
+// ------------------------------------------------------------ entrada ---
+function boot(){
+  fetch(API + '/estado').then(function(r){ return r.json(); }).then(function(e){
+    EST = e;
+    if (!LOCAL || !EST.locais[LOCAL]) { telaLocais(); return; }
+    if (!EST.locais[LOCAL].temPin) { telaCriarPin(false); return; }
+    if (!PIN) { telaPin(''); return; }
+    carregar();
+  }).catch(function(){ app.innerHTML = '<p class="erro">Não consegui carregar. Verifique a conexão e recarregue a página.</p>'; });
+}
+
+function topo(){
+  var h = '<h1>Controle de Validade</h1>';
+  if (LOCAL && D) h += '<span class="loc">' + esc(D.nome_local) + '</span>';
+  h += '<span class="emp">' + esc(EST ? EST.empresa : '') + '</span>';
+  if (LOCAL && D) h += '<button id="bt-trocar">Trocar local</button>';
+  document.getElementById('topo').innerHTML = h;
+  var bt = document.getElementById('bt-trocar');
+  if (bt) bt.onclick = function(){
+    gravarLS('val_local', null); LOCAL = ''; PIN = ''; D = null;
+    topo(); telaLocais();
+  };
+}
+
+function telaLocais(){
+  D = null; topo();
+  var h = '<div class="centro"><h2>Qual local?</h2><p>Cada local tem o seu PIN e só vê os próprios produtos.</p><div class="locais">';
+  h += '<button class="bt-local" data-local="cdt"><span>CDT<br><small>Centro de distribuição</small></span><span aria-hidden="true">›</span></button>';
+  h += '<button class="bt-local" data-local="bar"><span>Bar<br><small>Complexo de lazer</small></span><span aria-hidden="true">›</span></button>';
+  h += '</div></div>';
+  app.innerHTML = h;
+  var bts = app.querySelectorAll('[data-local]');
+  for (var i = 0; i < bts.length; i++) bts[i].onclick = function(){
+    LOCAL = this.getAttribute('data-local');
+    PIN = lerLS('val_pin_' + LOCAL) || '';
+    if (!EST.locais[LOCAL].temPin) telaCriarPin(false);
+    else if (PIN) carregar();
+    else telaPin('');
+  };
+}
+
+function nomeLocal(){ return EST && EST.locais[LOCAL] ? EST.locais[LOCAL].nome : LOCAL; }
+
+function telaPin(msg){
+  D = null; topo();
+  app.innerHTML = '<div class="centro"><h2>Entrar no ' + esc(nomeLocal()) + '</h2>'
+    + '<p>Digite o PIN do ' + esc(nomeLocal()) + '.</p>'
+    + '<input type="password" id="l-pin" inputmode="numeric" autocomplete="current-password" aria-label="PIN do local">'
+    + '<div class="erro">' + esc(msg) + '</div>'
+    + '<button class="bt-verde" id="l-ok">Entrar</button>'
+    + '<button class="link" id="l-trocar">Criar ou trocar o PIN deste local</button> '
+    + '<button class="link" id="l-voltar">Escolher outro local</button></div>';
+  var entrar = function(){
+    PIN = document.getElementById('l-pin').value.trim();
+    if (!PIN) return;
+    api('/tudo').then(function(d){ gravarLS('val_local', LOCAL); gravarLS('val_pin_' + LOCAL, PIN); D = d; render(); }).catch(function(){});
+  };
+  document.getElementById('l-ok').onclick = entrar;
+  document.getElementById('l-pin').addEventListener('keydown', function(ev){ if (ev.key === 'Enter') entrar(); });
+  document.getElementById('l-trocar').onclick = function(){ telaCriarPin(true); };
+  document.getElementById('l-voltar').onclick = telaLocais;
+  document.getElementById('l-pin').focus();
+}
+
+function telaCriarPin(trocar){
+  D = null; topo();
+  var nl = esc(nomeLocal());
+  app.innerHTML = '<div class="centro"><h2>' + (trocar ? 'Trocar o PIN do ' + nl : 'Primeiro acesso do ' + nl) + '</h2>'
+    + '<p>Quem autoriza é o setor de compras: informe o PIN do setor (o mesmo das cotações) e escolha o PIN que a equipe do ' + nl + ' vai usar.</p>'
+    + '<label for="c-adm">PIN do setor de compras</label><input type="password" id="c-adm" inputmode="numeric" autocomplete="off">'
+    + '<label for="c-pin">Novo PIN do ' + nl + ' (4 a 8 números)</label><input type="password" id="c-pin" inputmode="numeric" autocomplete="new-password">'
+    + '<label for="c-pin2">Repita o novo PIN</label><input type="password" id="c-pin2" inputmode="numeric" autocomplete="new-password">'
+    + '<div class="erro" id="c-erro"></div>'
+    + '<button class="bt-verde" id="c-ok">Salvar PIN e entrar</button>'
+    + '<button class="link" id="c-voltar">Voltar</button></div>';
+  document.getElementById('c-voltar').onclick = function(){ if (EST.locais[LOCAL].temPin) telaPin(''); else telaLocais(); };
+  document.getElementById('c-ok').onclick = function(){
+    var adm = document.getElementById('c-adm').value.trim();
+    var p1 = document.getElementById('c-pin').value.trim();
+    var p2 = document.getElementById('c-pin2').value.trim();
+    var er = document.getElementById('c-erro');
+    if (!adm) { er.textContent = 'Informe o PIN do setor de compras.'; return; }
+    if (!/^\d{4,8}$/.test(p1)) { er.textContent = 'O novo PIN precisa ter de 4 a 8 números.'; return; }
+    if (p1 !== p2) { er.textContent = 'Os dois PINs não são iguais.'; return; }
+    var bt = this; bt.disabled = true;
+    fetch(API + '/pin', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({local: LOCAL, admin_pin: adm, pin: p1})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        bt.disabled = false;
+        if (j.erro) { er.textContent = j.erro; return; }
+        EST.locais[LOCAL].temPin = true;
+        PIN = p1; gravarLS('val_local', LOCAL); gravarLS('val_pin_' + LOCAL, PIN);
+        toast('PIN do ' + nomeLocal() + ' salvo.');
+        carregar();
+      })
+      .catch(function(){ bt.disabled = false; er.textContent = 'Sem conexão. Tente de novo.'; });
+  };
+}
+
+function carregar(){
+  return api('/tudo').then(function(d){ gravarLS('val_local', LOCAL); D = d; render(); }).catch(function(e){ if (e.message !== '401') toast(e.message); });
+}
+
+// ----------------------------------------------------------- telas ---
+function render(){
+  topo();
+  var h = '<div class="abas"><button class="aba' + (VIEW === 'validades' ? ' on' : '') + '" data-view="validades">Validades</button>'
+    + '<button class="aba' + (VIEW === 'produtos' ? ' on' : '') + '" data-view="produtos">Produtos (' + D.produtos.length + ')</button></div>';
+  h += VIEW === 'produtos' ? htmlProdutos() : htmlValidades();
+  app.innerHTML = h;
+  var vs = app.querySelectorAll('[data-view]');
+  for (var i = 0; i < vs.length; i++) vs[i].onclick = function(){ VIEW = this.getAttribute('data-view'); ABERTO = null; EDIT = null; render(); window.scrollTo(0, 0); };
+  if (VIEW === 'produtos') { renderListaProdutos(); ligarProdutos(); }
+  else { renderLista(); ligarValidades(); }
+}
+
+function contagem(){
+  var c = {venc:0, m1:0, m2:0, m3:0, ok:0};
+  for (var i = 0; i < D.lotes.length; i++) c[faixa(diasAte(D.lotes[i].validade))]++;
+  return c;
+}
+
+function htmlValidades(){
+  var c = contagem(), h = '<div class="faixas" role="group" aria-label="Filtrar por prazo">';
+  for (var i = 0; i < FAIXAS.length; i++) {
+    var k = FAIXAS[i][0];
+    h += '<button class="faixa f-' + k + (FILTRO === k ? ' on' : '') + (c[k] ? '' : ' vazia') + '" data-faixa="' + k + '" aria-pressed="' + (FILTRO === k) + '">'
+      + '<span class="sw"></span><span class="n">' + c[k] + '</span><span class="r">' + FAIXAS[i][1] + '</span></button>';
+  }
+  h += '</div>';
+
+  // registrar entrada
+  var und = ENT.produto ? ENT.produto.unidade : '';
+  h += '<h3>Registrar entrada</h3><div class="caixa"><div class="entrada">'
+    + '<div class="busca-prod"><label for="e-prod">Produto</label>'
+    + '<input type="search" id="e-prod" autocomplete="off" placeholder="Digite o nome ou o código" value="' + esc(ENT.produto ? ENT.produto.nome : ENT.texto) + '">'
+    + '<div class="sugs" id="e-sugs" hidden></div></div>'
+    + '<div><label for="e-val">Validade</label><input type="date" id="e-val" value="' + esc(ENT.validade) + '"></div>'
+    + '<div><label for="e-qtd">Quantidade</label><div class="qtd-und"><input type="text" id="e-qtd" inputmode="decimal" placeholder="opcional" value="' + esc(ENT.qtd) + '"><span id="e-und">' + esc(und) + '</span></div></div>'
+    + '<div class="cheio"><label for="e-obs">Observação</label><input type="text" id="e-obs" placeholder="opcional, ex.: lote 2231, freezer 2" value="' + esc(ENT.obs) + '"></div>'
+    + '</div><div class="entrada-acao"><button class="bt-verde" id="e-ok">Registrar entrada</button><span class="msg" id="e-prev" style="margin:0"></span></div></div>';
+
+  // lista
+  h += '<h3>Na validade agora</h3><div class="caixa">'
+    + '<div class="filtro"><input type="search" id="l-busca" placeholder="Buscar na lista" value="' + esc(BUSCA) + '" aria-label="Buscar na lista">'
+    + (FILTRO || BUSCA ? '<button class="limpar" id="l-limpar">Mostrar tudo</button>' : '') + '</div>'
+    + '<div id="l-lista"></div></div>';
+
+  // baixas
+  var mes = D.hoje.slice(0, 7), desc = 0;
+  for (var b = 0; b < D.baixas.length; b++) if (D.baixas[b].status === 'descartado' && isoBR(D.baixas[b].baixa_em).slice(0, 7) === mes) desc++;
+  h += '<h3>Baixas</h3><div class="caixa"><p class="msg" style="margin-top:0">'
+    + (desc ? '<b style="color:var(--verm)">' + desc + ' lote' + (desc > 1 ? 's descartados' : ' descartado') + '</b> por vencimento este mês.' : 'Nenhum lote descartado este mês.') + '</p>';
+  if (D.baixas.length) {
+    h += '<details><summary>Últimos 60 dias (' + D.baixas.length + ')</summary>';
+    for (var j = 0; j < D.baixas.length; j++) {
+      var x = D.baixas[j], pr = x.produto || {};
+      h += '<div class="item-linha"><div class="txt"><div class="tit">' + esc(pr.nome) + '</div>'
+        + '<div class="sub">' + (x.quantidade != null ? fmtQtd(x.quantidade, pr.unidade) + ' · ' : '') + 'validade ' + dBr(x.validade) + ' · baixa em ' + dBr(isoBR(x.baixa_em)) + '</div></div>'
+        + '<span class="pill ' + x.status + '">' + x.status + '</span>'
+        + '<button class="bt-x" data-reabrir="' + x.id + '" title="Desfazer baixa (volta para a lista)" aria-label="Desfazer baixa">↺</button></div>';
+    }
+    h += '</details>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function lotesFiltrados(){
+  var termos = norm(BUSCA).split(/\s+/).filter(Boolean), out = [];
+  for (var i = 0; i < D.lotes.length; i++) {
+    var l = D.lotes[i], n = diasAte(l.validade);
+    if (FILTRO && faixa(n) !== FILTRO) continue;
+    if (termos.length) {
+      var alvo = norm((l.produto ? l.produto.nome + ' ' + (l.produto.codigo || '') + ' ' + (l.produto.grupo || '') : '') + ' ' + (l.obs || ''));
+      var ok = true;
+      for (var t = 0; t < termos.length; t++) if (alvo.indexOf(termos[t]) < 0) { ok = false; break; }
+      if (!ok) continue;
+    }
+    out.push(l);
+  }
+  return out;
+}
+
+function renderLista(){
+  var box = document.getElementById('l-lista');
+  if (!box) return;
+  var lista = lotesFiltrados(), h = '';
+  if (!D.lotes.length) {
+    h = '<div class="vazio"><b>Nenhum lote na lista ainda</b><span class="msg">Registre acima cada produto que chegar, com a data de validade da embalagem.</span></div>';
+  } else if (!lista.length) {
+    h = '<div class="vazio"><span class="msg">Nada aqui com esse filtro.</span></div>';
+  }
+  for (var i = 0; i < lista.length; i++) {
+    var l = lista[i], pr = l.produto || {}, n = diasAte(l.validade), f = faixa(n);
+    h += '<div class="lote" data-lote="' + l.id + '" role="button" tabindex="0" aria-expanded="' + (ABERTO === l.id) + '">'
+      + '<div class="dias f-' + f + '" aria-label="' + esc(textoDias(n)) + '">' + tile(n) + '</div>'
+      + '<div class="info"><div class="nome">' + esc(pr.nome) + '</div>'
+      + '<div class="sub">' + (l.quantidade != null ? fmtQtd(l.quantidade, pr.unidade) + ' · ' : '') + 'validade ' + dBr(l.validade) + (n > 59 ? ' · ' + textoDias(n) : '') + '</div>'
+      + (l.obs ? '<div class="obs">' + esc(l.obs) + '</div>' : '') + '</div>'
+      + '<span class="chev" aria-hidden="true">' + (ABERTO === l.id ? '▴' : '▾') + '</span></div>';
+    if (ABERTO === l.id) {
+      if (EDIT === l.id) {
+        h += '<div class="edita"><div><label for="x-val">Validade</label><input type="date" id="x-val" value="' + esc(l.validade) + '"></div>'
+          + '<div><label for="x-qtd">Quantidade' + (pr.unidade ? ' (' + esc(pr.unidade) + ')' : '') + '</label><input type="text" id="x-qtd" inputmode="decimal" value="' + (l.quantidade != null ? esc(String(l.quantidade).replace('.', ',')) : '') + '"></div>'
+          + '<div class="cheio"><label for="x-obs">Observação</label><input type="text" id="x-obs" value="' + esc(l.obs || '') + '"></div>'
+          + '<div class="cheio entrada-acao"><button class="bt-verde bt-mini" data-salvar="' + l.id + '">Salvar</button><button class="bt-cinza bt-mini" data-cancelar="1">Cancelar</button></div></div>';
+      } else {
+        h += '<div class="acoes-lote"><button class="bt-cinza bt-mini" data-baixa="usado" data-id="' + l.id + '">Usado / acabou</button>'
+          + '<button class="bt-desc bt-mini" data-baixa="descartado" data-id="' + l.id + '">Descartado</button>'
+          + '<button class="bt-cinza bt-mini" data-editar="' + l.id + '">Corrigir</button>'
+          + '<button class="bt-del bt-mini" data-excluir="' + l.id + '">Excluir (lançado errado)</button></div>';
+      }
+    }
+  }
+  box.innerHTML = h;
+  ligarLista();
+}
+
+function ligarLista(){
+  var ls = app.querySelectorAll('[data-lote]');
+  var alternar = function(){
+    var id = this.getAttribute('data-lote');
+    ABERTO = ABERTO === id ? null : id; EDIT = null;
+    renderLista();
+  };
+  for (var i = 0; i < ls.length; i++) {
+    ls[i].onclick = alternar;
+    ls[i].onkeydown = function(ev){ if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); alternar.call(this); } };
+  }
+  var bxs = app.querySelectorAll('[data-baixa]');
+  for (var j = 0; j < bxs.length; j++) bxs[j].onclick = function(){
+    var id = this.getAttribute('data-id'), st = this.getAttribute('data-baixa');
+    this.disabled = true;
+    api('/lotes/' + id + '/baixa', {method:'POST', body: JSON.stringify({status: st})}).then(function(){
+      ABERTO = null;
+      carregar();
+      toast(st === 'descartado' ? 'Lote descartado.' : 'Baixa registrada.', 'Desfazer', function(){
+        api('/lotes/' + id + '/reabrir', {method:'POST'}).then(function(){ toast('Lote voltou para a lista.'); carregar(); }).catch(function(e){ toast(e.message); });
+      });
+    }).catch(function(e){ toast(e.message); carregar(); });
+  };
+  var eds = app.querySelectorAll('[data-editar]');
+  for (var k = 0; k < eds.length; k++) eds[k].onclick = function(){ EDIT = this.getAttribute('data-editar'); renderLista(); var v = document.getElementById('x-val'); if (v) v.focus(); };
+  var cc = app.querySelector('[data-cancelar]');
+  if (cc) cc.onclick = function(){ EDIT = null; renderLista(); };
+  var sv = app.querySelector('[data-salvar]');
+  if (sv) sv.onclick = function(){
+    var id = this.getAttribute('data-salvar');
+    var val = document.getElementById('x-val').value;
+    var q = parseQtd(document.getElementById('x-qtd').value);
+    if (!val) { toast('Informe a data de validade.'); return; }
+    if (q !== null && isNaN(q)) { toast('Quantidade inválida.'); return; }
+    sv.disabled = true;
+    api('/lotes/' + id + '/editar', {method:'POST', body: JSON.stringify({validade: val, quantidade: q, obs: document.getElementById('x-obs').value})})
+      .then(function(){ EDIT = null; toast('Lote corrigido.'); carregar(); })
+      .catch(function(e){ sv.disabled = false; toast(e.message); });
+  };
+  var exs = app.querySelectorAll('[data-excluir]');
+  for (var m = 0; m < exs.length; m++) exs[m].onclick = function(){
+    if (!confirm('Excluir este lançamento? Use só se foi registrado por engano. Para produto que venceu, use "Descartado".')) return;
+    api('/lotes/' + this.getAttribute('data-excluir'), {method:'DELETE'}).then(function(){ ABERTO = null; toast('Lançamento excluído.'); carregar(); }).catch(function(e){ toast(e.message); });
+  };
+}
+
+// busca de produto na entrada
+var SUG = [], SUG_I = 0;
+function buscarProdutos(txt, limite){
+  var t = norm(txt).trim(); if (!t) return [];
+  var termos = t.split(/\s+/), exatos = [], inicio = [], resto = [];
+  for (var i = 0; i < D.produtos.length; i++) {
+    var p = D.produtos[i], nome = norm(p.nome);
+    if (p.codigo && p.codigo === t) { exatos.push(p); continue; }
+    var ok = true;
+    for (var k = 0; k < termos.length; k++) if (nome.indexOf(termos[k]) < 0) { ok = false; break; }
+    if (!ok) continue;
+    (nome.indexOf(t) === 0 ? inicio : resto).push(p);
+  }
+  return exatos.concat(inicio, resto).slice(0, limite || 8);
+}
+function mostrarSugs(){
+  var box = document.getElementById('e-sugs'), txt = document.getElementById('e-prod').value;
+  if (!box) return;
+  if (!txt.trim()) { box.hidden = true; SUG = []; return; }
+  SUG = buscarProdutos(txt, 8);
+  var h = '';
+  for (var i = 0; i < SUG.length; i++) {
+    h += '<button type="button" class="sug' + (i === SUG_I ? ' ativo' : '') + '" data-sug="' + i + '">' + esc(SUG[i].nome)
+      + '<small>' + (SUG[i].codigo ? 'cód. ' + esc(SUG[i].codigo) + ' · ' : '') + esc(SUG[i].unidade) + (SUG[i].grupo ? ' · ' + esc(SUG[i].grupo) : '') + '</small></button>';
+  }
+  h += '<button type="button" class="sug novo" data-sug="novo">+ Cadastrar “' + esc(txt.trim()) + '” como produto novo</button>';
+  box.innerHTML = h; box.hidden = false;
+  var bs = box.querySelectorAll('[data-sug]');
+  for (var j = 0; j < bs.length; j++) {
+    bs[j].onmousedown = function(ev){ ev.preventDefault(); };
+    bs[j].onclick = function(){ var v = this.getAttribute('data-sug'); if (v === 'novo') cadastrarRapido(txt.trim()); else escolherProduto(SUG[+v]); };
+  }
+}
+function escolherProduto(p){
+  ENT.produto = p; ENT.texto = '';
+  document.getElementById('e-prod').value = p.nome;
+  document.getElementById('e-und').textContent = p.unidade || '';
+  document.getElementById('e-sugs').hidden = true;
+  var v = document.getElementById('e-val'); v.focus();
+  if (v.showPicker) { try { v.showPicker(); } catch(e){} }
+}
+function cadastrarRapido(nome){
+  var und = prompt('Cadastrar "' + nome + '" no ' + D.nome_local + '.\n\nQual a unidade? (UN, KG, LT, CX, PC…)', 'UN');
+  if (und === null) return;
+  api('/produtos', {method:'POST', body: JSON.stringify({nome: nome, unidade: und || 'UN'})}).then(function(p){
+    D.produtos.push(p);
+    D.produtos.sort(function(a, b){ return norm(a.nome) < norm(b.nome) ? -1 : 1; });
+    toast('Produto cadastrado.');
+    escolherProduto(p);
+  }).catch(function(e){ toast(e.message); });
+}
+function previa(){
+  var el = document.getElementById('e-prev'), v = document.getElementById('e-val').value;
+  if (!el) return;
+  if (!v) { el.textContent = ''; return; }
+  var n = diasAte(v);
+  el.innerHTML = '<span class="mini-dot f-' + faixa(n) + '"></span>' + textoDias(n);
+}
+
+function ligarValidades(){
+  var fs = app.querySelectorAll('[data-faixa]');
+  for (var i = 0; i < fs.length; i++) fs[i].onclick = function(){
+    var k = this.getAttribute('data-faixa');
+    FILTRO = FILTRO === k ? null : k; ABERTO = null;
+    render();
+    var lista = document.getElementById('l-lista');
+    if (FILTRO && lista && lista.scrollIntoView) lista.scrollIntoView({block: 'nearest'});
+  };
+  var lb = document.getElementById('l-busca');
+  lb.oninput = function(){ BUSCA = this.value; ABERTO = null; renderLista(); var lp = document.getElementById('l-limpar'); if (!lp && BUSCA) { render(); var nb = document.getElementById('l-busca'); nb.focus(); nb.setSelectionRange(BUSCA.length, BUSCA.length); } };
+  var lp = document.getElementById('l-limpar');
+  if (lp) lp.onclick = function(){ FILTRO = null; BUSCA = ''; render(); };
+
+  var ep = document.getElementById('e-prod');
+  ep.oninput = function(){ ENT.produto = null; ENT.texto = this.value; document.getElementById('e-und').textContent = ''; SUG_I = 0; mostrarSugs(); };
+  ep.onfocus = function(){ if (!ENT.produto && this.value.trim()) mostrarSugs(); };
+  ep.onblur = function(){ setTimeout(function(){ var b = document.getElementById('e-sugs'); if (b) b.hidden = true; }, 150); };
+  ep.onkeydown = function(ev){
+    var box = document.getElementById('e-sugs');
+    if (box.hidden || !SUG.length) return;
+    if (ev.key === 'ArrowDown') { ev.preventDefault(); SUG_I = Math.min(SUG_I + 1, SUG.length - 1); mostrarSugs(); }
+    else if (ev.key === 'ArrowUp') { ev.preventDefault(); SUG_I = Math.max(SUG_I - 1, 0); mostrarSugs(); }
+    else if (ev.key === 'Enter') { ev.preventDefault(); escolherProduto(SUG[SUG_I]); }
+    else if (ev.key === 'Escape') { box.hidden = true; }
+  };
+  var ev = document.getElementById('e-val');
+  ev.oninput = ev.onchange = function(){ ENT.validade = this.value; previa(); };
+  document.getElementById('e-qtd').oninput = function(){ ENT.qtd = this.value; };
+  document.getElementById('e-obs').oninput = function(){ ENT.obs = this.value; };
+  previa();
+
+  var ok = document.getElementById('e-ok');
+  ok.onclick = function(){
+    if (!ENT.produto) {
+      var txt = document.getElementById('e-prod').value.trim();
+      if (!txt) { toast('Escolha o produto.'); ep.focus(); return; }
+      var achou = buscarProdutos(txt, 3);
+      if (achou.length === 1) { ENT.produto = achou[0]; }
+      else if (!achou.length) { cadastrarRapido(txt); return; }
+      else { toast('Escolha o produto na lista.'); ep.focus(); mostrarSugs(); return; }
+    }
+    var val = document.getElementById('e-val').value;
+    if (!val) { toast('Informe a data de validade.'); document.getElementById('e-val').focus(); return; }
+    var ano = +val.slice(0, 4);
+    if (ano < 2020 || ano > 2100) { toast('Confira o ano da validade.'); return; }
+    var q = parseQtd(document.getElementById('e-qtd').value);
+    if (q !== null && isNaN(q)) { toast('Quantidade inválida.'); return; }
+    ok.disabled = true;
+    var nome = ENT.produto.nome, n = diasAte(val);
+    api('/lotes', {method:'POST', body: JSON.stringify({produto_id: ENT.produto.id, validade: val, quantidade: q, obs: document.getElementById('e-obs').value})})
+      .then(function(r){
+        ENT = { produto: null, texto: '', validade: '', qtd: '', obs: '' };
+        carregar().then(function(){ var p = document.getElementById('e-prod'); if (p) p.focus(); });
+        toast(nome + ': ' + textoDias(n) + '.', 'Desfazer', function(){
+          api('/lotes/' + r.id, {method:'DELETE'}).then(function(){ toast('Entrada desfeita.'); carregar(); }).catch(function(e){ toast(e.message); });
+        });
+      })
+      .catch(function(e){ ok.disabled = false; toast(e.message); });
+  };
+
+  var rs = app.querySelectorAll('[data-reabrir]');
+  for (var r = 0; r < rs.length; r++) rs[r].onclick = function(){
+    api('/lotes/' + this.getAttribute('data-reabrir') + '/reabrir', {method:'POST'}).then(function(){ toast('Lote voltou para a lista.'); carregar(); }).catch(function(e){ toast(e.message); });
+  };
+}
+
+// ------------------------------------------------------------ produtos ---
+function htmlProdutos(){
+  var grupos = {}, ops = '';
+  for (var i = 0; i < D.produtos.length; i++) if (D.produtos[i].grupo && !grupos[D.produtos[i].grupo]) { grupos[D.produtos[i].grupo] = 1; ops += '<option value="' + esc(D.produtos[i].grupo) + '">'; }
+  return '<div class="caixa"><details id="p-add"><summary>+ Cadastrar produto</summary><div class="form-prod">'
+    + '<div class="cheio"><label for="p-nome">Nome</label><input type="text" id="p-nome" placeholder="ex.: POLPA DE MARACUJA 1KG"></div>'
+    + '<div><label for="p-und">Unidade</label><input type="text" id="p-und" list="p-unds" placeholder="UN"><datalist id="p-unds"><option value="UN"><option value="KG"><option value="LT"><option value="CX"><option value="PC"></datalist></div>'
+    + '<div><label for="p-cod">Código (opcional)</label><input type="text" id="p-cod" inputmode="numeric" placeholder="código do sistema"></div>'
+    + '<div class="cheio"><label for="p-grupo">Grupo</label><input type="text" id="p-grupo" list="p-grupos" placeholder="ex.: Geladas"><datalist id="p-grupos">' + ops + '</datalist></div>'
+    + '</div><div class="entrada-acao"><button class="bt-verde bt-mini" id="p-ok">Salvar produto</button></div></details></div>'
+    + '<h3>Catálogo do ' + esc(D.nome_local) + '</h3><div class="caixa">'
+    + '<div class="filtro"><input type="search" id="p-busca" placeholder="Buscar produto" value="' + esc(BUSCA_P) + '" aria-label="Buscar produto"></div>'
+    + '<div id="p-lista"></div></div>';
+}
+
+function renderListaProdutos(){
+  var box = document.getElementById('p-lista'); if (!box) return;
+  var porProd = {};
+  for (var i = 0; i < D.lotes.length; i++) {
+    var l = D.lotes[i], n = diasAte(l.validade);
+    if (!porProd[l.produto_id]) porProd[l.produto_id] = {q: 0, min: n};
+    porProd[l.produto_id].q++; if (n < porProd[l.produto_id].min) porProd[l.produto_id].min = n;
+  }
+  var termos = norm(BUSCA_P).split(/\s+/).filter(Boolean), grupos = {}, nomes = [];
+  for (var j = 0; j < D.produtos.length; j++) {
+    var p = D.produtos[j], alvo = norm(p.nome + ' ' + (p.codigo || '')), ok = true;
+    for (var t = 0; t < termos.length; t++) if (alvo.indexOf(termos[t]) < 0) { ok = false; break; }
+    if (!ok) continue;
+    var g = p.grupo || 'Sem grupo';
+    if (!grupos[g]) { grupos[g] = []; nomes.push(g); }
+    grupos[g].push(p);
+  }
+  nomes.sort(function(a, b){ return a === 'Sem grupo' ? 1 : b === 'Sem grupo' ? -1 : a.localeCompare(b); });
+  var h = '';
+  if (!nomes.length) h = '<div class="vazio"><span class="msg">Nenhum produto com esse nome. Cadastre em “+ Cadastrar produto”.</span></div>';
+  for (var k = 0; k < nomes.length; k++) {
+    var lst = grupos[nomes[k]];
+    h += '<div class="cat-tit">' + esc(nomes[k]) + ' (' + lst.length + ')</div>';
+    for (var m = 0; m < lst.length; m++) {
+      var pp = lst[m], info = porProd[pp.id];
+      h += '<div class="item-linha"><div class="txt"><div class="tit">' + esc(pp.nome) + '</div>'
+        + '<div class="sub">' + (pp.codigo ? 'cód. ' + esc(pp.codigo) + ' · ' : '') + esc(pp.unidade) + '</div></div>'
+        + (info ? '<span class="pill lotes"><span class="mini-dot f-' + faixa(info.min) + '"></span>' + info.q + ' lote' + (info.q > 1 ? 's' : '') + '</span>' : '')
+        + '<button class="bt-cinza bt-mini" data-lancar="' + pp.id + '">Lançar</button>'
+        + '<button class="bt-x" data-remover="' + pp.id + '" title="Remover do catálogo" aria-label="Remover do catálogo">&times;</button></div>';
+    }
+  }
+  box.innerHTML = h;
+  var ls = box.querySelectorAll('[data-lancar]');
+  for (var a = 0; a < ls.length; a++) ls[a].onclick = function(){
+    var id = this.getAttribute('data-lancar');
+    for (var z = 0; z < D.produtos.length; z++) if (D.produtos[z].id === id) ENT = { produto: D.produtos[z], texto: '', validade: '', qtd: '', obs: '' };
+    VIEW = 'validades'; render(); window.scrollTo(0, 0);
+    var v = document.getElementById('e-val'); if (v) v.focus();
+  };
+  var rs = box.querySelectorAll('[data-remover]');
+  for (var b = 0; b < rs.length; b++) rs[b].onclick = function(){
+    if (!confirm('Remover este produto do catálogo do ' + D.nome_local + '?')) return;
+    api('/produtos/' + this.getAttribute('data-remover'), {method:'DELETE'}).then(function(){ toast('Produto removido.'); carregar(); }).catch(function(e){ toast(e.message); });
+  };
+}
+
+function ligarProdutos(){
+  var pb = document.getElementById('p-busca');
+  pb.oninput = function(){ BUSCA_P = this.value; renderListaProdutos(); };
+  document.getElementById('p-ok').onclick = function(){
+    var nome = document.getElementById('p-nome').value.trim();
+    if (!nome) { toast('Escreva o nome do produto.'); return; }
+    var bt = this; bt.disabled = true;
+    api('/produtos', {method:'POST', body: JSON.stringify({
+      nome: nome,
+      unidade: document.getElementById('p-und').value,
+      codigo: document.getElementById('p-cod').value,
+      grupo: document.getElementById('p-grupo').value
+    })}).then(function(){ toast('Produto cadastrado.'); BUSCA_P = nome; carregar(); })
+      .catch(function(e){ bt.disabled = false; toast(e.message); });
+  };
+}
+
+// atualiza sozinho ao voltar para a aba e a cada 30 min (a contagem de dias muda à meia-noite)
+document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && D && !EDIT) carregar(); });
+setInterval(function(){ if (document.visibilityState === 'visible' && D && !EDIT && !document.activeElement.matches('input')) carregar(); }, 30 * 60000);
+
+boot();
+</script>
+</body>
+</html>
